@@ -8,7 +8,9 @@ Harmful algal blooms (HABs) threaten aquatic ecosystems by reducing water qualit
 
 ### Description
 
-What is the data, preprocessing performed, and unique characteristics? Why is this dataset interesting to you.
+This [dataset](https://data.mendeley.com/datasets/c3792mm5f6/1) contains features for detecting Harmful Algal Blooms (HABs), combining important features like the Bloom Index, chlorophyll levels, and sea surface temperature. The parameters cover a range of other factors like Nitrogen, Phosphorus, pH, etc.
+
+~~What is the data~~, preprocessing performed, and unique characteristics? Why is this dataset interesting to you.
 
 ### Model Choice
 
@@ -20,4 +22,4 @@ What model? Why? List architecture, params, and layers.
 
 ### Summary
 
-# Resources
+### [Resources](RESOURCES.md)
