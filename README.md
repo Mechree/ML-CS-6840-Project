@@ -4,7 +4,7 @@
 
 ### Objectives
 
-Harmful algal blooms (HABs) threaten aquatic ecosystems by reducing water quality and biodiversity. This project, led by the team of Aiden Cox, Michael McCain, and Rose Taylor, aims to develop a binary classification model using tabular data to determine whether a given contains an algal bloom. Features such as algal biomass and chlorophyll-a concentration are extracted to train supervised learning algorithms. The resulting model provides an automated method to identify HAB presence from senosr data.
+Harmful algal blooms (HABs) threaten aquatic ecosystems by reducing water quality and biodiversity. This project, led by the team of Aiden Cox, Michael McCain, and Rose Taylor, aims to develop a binary classification model using tabular data to determine whether a given datapoint contains an algal bloom. Features such as algal biomass and chlorophyll-a concentration are extracted to train supervised learning algorithms. The resulting model provides an automated method to identify HAB presence from sensor data.
 
 ### Description
 
@@ -18,8 +18,17 @@ What model? Why? List architecture, params, and layers.
 
 ### Training Process
 
+Hyperparameter settings, ~~choice of training frameworks such as pytorch~~, and the test process
+
 ### Results
 
+: Accuracy, precision, and recall are expected. Anything you think that you should show (f1).
+
 ### Summary
+
+Your contributions and Results.
+
+Note that: explicitly conclude your contributions to this project.
+For example, What you did in this project in your report.
 
 ### [Resources](RESOURCES.md)
