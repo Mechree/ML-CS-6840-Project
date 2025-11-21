@@ -37,7 +37,8 @@ Each number represents how much an original feature contributes to a given PCA c
 
 ### Silhouette Score
 
-The Silhouette Score evaluates how well each data point fits within its assigned cluster, and how distinctly separated it is from other clusters.
+The Silhouette Score evaluates how well each data point fits within its assigned cluster, and how distinctly separated it is from other clusters. Values range between -1 and 1.
+A 1 means the data point fits very well in its own cluster. 0 indicates the data point is between clusters or the clusters are overlapping. -1 means the data point is in the wrong cluster.
 
 ### Normalized Mutual Index (NMI)
 
