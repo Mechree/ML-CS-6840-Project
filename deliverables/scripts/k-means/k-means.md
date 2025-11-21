@@ -39,6 +39,14 @@ Each number represents how much an original feature contributes to a given PCA c
 
 The Silhouette Score evaluates how well each data point fits within its assigned cluster, and how distinctly separated it is from other clusters.
 
+### Normalized Mutual Index (NMI)
+
+NMI measures the amount of shared information between the predicted clusters and the true clusters. Ranging from 0 to 1 where 1 is high similarity and 0 is no similarity.
+
+### Adjusted Rand Index (ARI)
+
+ARI computes another similarity metric used to measure two clusterings, adjusted for chance. Useful for determining the agreement of results between two methods or against ground truth data. A value of 1.0 indicates perfect match, a value of 0 indicates agreement equivilent to randomness, and a negative value indicates (up to -1) indicates severe disagreement. Considered more robust the NMI.
+
 ## Full workflow
 
 1. Import the dataset. If data contains labeled data, ensure the ground truth column is ignored or dropped for future processing.
@@ -46,7 +54,7 @@ The Silhouette Score evaluates how well each data point fits within its assigned
 3. Reduce dimensionality with PCA.
 4. Use Elbow Method to identify optimum n_clusters (Optional if desired cluster size is known).
 5. Implement K-Means using scaled data and calculate Silhouette Score.
-6. Plot data and compare with labeled dataset.
+6. Plot using PCA and compare against ground truth.
 
 # Resources
 
@@ -59,3 +67,9 @@ The Silhouette Score evaluates how well each data point fits within its assigned
 [K-Means with PCA Dimensionality Reduction](https://www.stepbystepdatascience.com/k-means-and-pca-in-python-with-sklearn)
 
 [What is PCA?](https://365datascience.com/tutorials/python-tutorials/principal-components-analysis/)
+
+[Clustering Centroids](https://pythonprogramminglanguage.com/kmeans-clustering-centroid/index.html)
+
+[3D Plotting with KMeans](https://stackoverflow.com/questions/64987810/3d-plotting-of-a-dataset-that-uses-k-means)
+
+[Clustering Performance Metrics](https://medium.com/@Sunil_Kumawat/performance-metrics-for-clustering-9badee0b7db8)
