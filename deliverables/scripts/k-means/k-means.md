@@ -1,6 +1,8 @@
 # K-Means Clustering
 
-> description and why this model was chosen and limitations
+This model was chosen to compare the performance of an unsupervised model with that of a labeled dataset. K-Means is relatively simplistic and efficient compared to other unsupervised models and allows for the segmentation of data into clusters. The resulting clusters work well for our use case, since our ground truth labeled data is binary. Meaning, the labels from the KMeans model can be compared against the ground truth labels and additional metrics can be used to verify their similarity.
+
+Some limitations of this model include difficulties with datasets with many features. However, Principal Components Analysis (PCA) and other dimension reduction methods can be employed to mitigate this issue. Another limitation is that the resulting centroids may be heavily influenced by outliers. It is generally recommended to identify and remove these outliers during data preprocessing to avoid this.
 
 ## How K-Means works
 
@@ -74,3 +76,5 @@ ARI computes another similarity metric used to measure two clusterings, adjusted
 [3D Plotting with KMeans](https://stackoverflow.com/questions/64987810/3d-plotting-of-a-dataset-that-uses-k-means)
 
 [Clustering Performance Metrics](https://medium.com/@Sunil_Kumawat/performance-metrics-for-clustering-9badee0b7db8)
+
+[K-Means Pros and Cons](https://developers.google.com/machine-learning/clustering/kmeans/advantages-disadvantages)
