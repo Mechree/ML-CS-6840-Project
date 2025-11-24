@@ -16,6 +16,7 @@ from sklearn.decomposition import PCA
 import dataframe_image as dfi
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 import matplotlib.patches as mpatches
+from sklearn.metrics import calinski_harabasz_score
 
 # Functions
 def Elbow_Method(data, init_c):
@@ -59,6 +60,18 @@ def Cluster_Counts(df, feature, col_label, file_path):
     cluster_value_count = df[feature].value_counts().sort_index()
     df_clus = cluster_value_count.to_frame(name=col_label)
     dfi.export(df_clus, file_path,dpi=300)
+def VRC_Comp(num_c_start, rg, dataframe, features, label, filepath):
+    num_clusters = num_c_start
+
+    for i in range(rg):
+        kmeans = KMeans(n_clusters=num_clusters, n_init=9, random_state=42).fit(dataframe[features])
+        dataframe['KMeans-Cluster'] = kmeans.labels_
+        vrc = calinski_harabasz_score(dataframe[features], dataframe[label])
+        df_vrc = pd.DataFrame([vrc], columns=['Variance Ratio Criterion'])
+        file_name = f'vrc-{num_clusters}C.png'
+        full_filepath = f'{filepath}\\{file_name}'
+        dfi.export(df_vrc, full_filepath, dpi=300)
+        num_clusters += 1
 
 # Main
 ### Import data
@@ -103,11 +116,15 @@ print(top_feats)
 ### Identify optimum clusters using elbow method
 Elbow_Method(df[scaled_feats], 7)
 
+### Verify optimum clusters using VRC
+VRC_Comp(2, 4, df, scaled_feats, 'KMeans-Cluster', asset_path)
+
 ### Fit K-Means to scaled data
 num_clusters = 2
 kmeans = KMeans(n_clusters=num_clusters, n_init=9, random_state=42).fit(df[scaled_feats])
 df['KMeans-Cluster'] = kmeans.labels_
 Cluster_Counts(df, 'KMeans-Cluster', 'kmeans-count', f'{asset_path}\\cluster-data-count.png')
+
 
 ### Plot kmeans scaled data in PCA space
 df_pca = PCA(n_components=0.70).set_output(transform="pandas").fit_transform(df[scaled_feats])
