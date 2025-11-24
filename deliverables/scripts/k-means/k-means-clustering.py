@@ -22,7 +22,7 @@ def Elbow_Method(data, init_c):
   kmeans_kwargs = {
   "init": "random",
   "n_init": init_c,
-  "random_state": 0,
+  "random_state": 42,
   }
   sse = []
   for k in range(1, init_c + 1):
@@ -55,33 +55,29 @@ def Plot_Component_Variance(pca_obj, file_path):
     plt.savefig(file_path)
     plt.show()
     return
-def Cluster_Counts(df, label , file_path):
-    cluster_value_count = df[label].value_counts().sort_index()
-    df_clus = cluster_value_count.to_frame(name='kmeans-count')
+def Cluster_Counts(df, feature, col_label, file_path):
+    cluster_value_count = df[feature].value_counts().sort_index()
+    df_clus = cluster_value_count.to_frame(name=col_label)
     dfi.export(df_clus, file_path,dpi=300)
 
 # Main
 ### Import data
 asset_path = Path(__file__).parent.parent.parent.parent / 'assets' / 'k-means-figures'
 data_path = Path(__file__).parent.parent.parent.parent / 'dataset-harmful-algal-bloom(HAB)' / 'HAB_Artificial_GAN_Dataset.csv'
-# print(data_path)
 df = pd.read_csv(data_path)
 
-hab_count = df['HAB_Present'].value_counts().sort_index()
-df_hab = hab_count.to_frame(name='hab-count')
-dfi.export(df_hab, filename=f'{asset_path}\\hab-data-count.png',dpi=300)
+Cluster_Counts(df, 'HAB_Present', 'HAB-count', f'{asset_path}\\hab-data-count.png')
 
 col_names = df.columns[:-1]
 scaled_feats = []
 for col in col_names:
   scaled_feats.append(col + '_T')
 
-### Transform data 
+### Transform data using scaler 
 scaler = StandardScaler()
 df[scaled_feats] = scaler.fit_transform(df[col_names])
-# print(df[scaled_feats])
 
-### Apply PCA, plot, identify influential features, and reduce
+### Apply PCA, plot variance, identify influential features, and reduce
 pca = PCA()
 pca.fit(df[scaled_feats])
 Plot_Component_Variance(pca, f'{asset_path}\\pca-component-variance.png')
@@ -91,7 +87,7 @@ pca_red = PCA(n_components=0.70)
 pca_red.fit_transform(df[scaled_feats])
 
 component_labels = [f"PC{i+1}" for i in range(pca_red.n_components_)]
-# print(component_labels)
+print(component_labels)
 
 loadings = pd.DataFrame(
     pca_red.components_.T,
@@ -107,13 +103,13 @@ print(top_feats)
 ### Identify optimum clusters using elbow method
 Elbow_Method(df[scaled_feats], 7)
 
-### fit K-Means to scaled data
+### Fit K-Means to scaled data
 num_clusters = 2
 kmeans = KMeans(n_clusters=num_clusters, n_init=9, random_state=42).fit(df[scaled_feats])
-df['KMeans_2'] = kmeans.labels_
-Cluster_Counts(df, 'KMeans_2', f'{asset_path}\\cluster-data-count.png')
+df['KMeans-Cluster'] = kmeans.labels_
+Cluster_Counts(df, 'KMeans-Cluster', 'kmeans-count', f'{asset_path}\\cluster-data-count.png')
 
-### Plot over k-means PCA data
+### Plot kmeans scaled data in PCA space
 df_pca = PCA(n_components=0.70).set_output(transform="pandas").fit_transform(df[scaled_feats])
 centers_pca = PCA(n_components=0.70).set_output(transform="pandas").fit(df[scaled_feats]).transform(kmeans.cluster_centers_)
 
@@ -122,7 +118,7 @@ ax = fig_3d_scatter.add_subplot(111, projection='3d')
 
 scatter = ax.scatter(
     df_pca['pca0'], df_pca['pca1'], df_pca['pca2'],
-    c=df['KMeans_2'], cmap='winter', s=50)
+    c=df['KMeans-Cluster'], cmap='winter', s=50)
 ax.scatter(
     centers_pca['pca0'], centers_pca['pca1'], centers_pca['pca2'],
     c='red', s=250, marker='X', label='Cluster Centers', edgecolor='k', zorder=1000)
@@ -134,12 +130,11 @@ ax.set_ylabel('PC2')
 ax.set_zlabel('PC3')
 
 handles, _ = scatter.legend_elements(prop="colors")
-labels = [f'Cluster {i}' for i in sorted(df['KMeans_2'].unique())]
+labels = [f'Cluster {i}' for i in sorted(df['KMeans-Cluster'].unique())]
 center_patch = mpatches.Patch(color='red', label='Cluster Centers')
 ax.legend(handles=handles + [center_patch], labels=labels + ['Cluster Centers'])
-
 plt.title('KMeans on Scaled Data / Plotted in PCA space')
 plt.show()
 
-### Compare clustering vs ground truth
-Metrics(df, scaled_feats, kmeans.labels_,'HAB_Present', 'KMeans_2', f'{asset_path}\\evaluation-metrics.png')
+### Compare clustering vs ground truth and obtain silhouette score
+Metrics(df, scaled_feats, kmeans.labels_,'HAB_Present', 'KMeans-Cluster', f'{asset_path}\\evaluation-metrics.png')
