@@ -36,12 +36,35 @@ def Elbow_Method(data, init_c):
   plt.xlabel("Number of Clusters")
   plt.ylabel("Sum of Squared Errors (SSE)")
   plt.show()
+def Metrics(data_frame, df_features, kmeans_labels, truth_label, pred_label, filepath):
+    # Compare clustering vs ground truth
+    sil_val = silhouette_score(data_frame[df_features], kmeans_labels)
+    ari = adjusted_rand_score(data_frame[truth_label], data_frame[pred_label])
+    nmi = normalized_mutual_info_score(data_frame[truth_label], data_frame[pred_label])
+    print(f'Silhouette Score: {sil_val} \nARI: {ari} \nNMI: {nmi}')
+
+    # Save metrics as image
+    df_metrics = pd.DataFrame([[sil_val,ari,nmi]], columns=['Silhouette_Score','Adjusted_Rand_Index','Normalized_Mutual_Information'])
+    dfi.export(df_metrics, filepath, dpi=300)
+def Plot_Component_Variance(pca_obj, file_path):
+    plt.figure(figsize=(12,9))
+    plt.plot(range(1, len(pca_obj.explained_variance_ratio_.cumsum()) + 1), pca_obj.explained_variance_ratio_.cumsum(),marker='o', linestyle='--')
+    plt.title('Variance by Components')
+    plt.xlabel('Number of Components')
+    plt.ylabel('Cumulative Explained Variance')
+    plt.savefig(file_path)
+    plt.show()
+    return
+def Cluster_Counts(df, label , file_path):
+    cluster_value_count = df[label].value_counts().sort_index()
+    df_clus = cluster_value_count.to_frame(name='kmeans-count')
+    dfi.export(df_clus, file_path,dpi=300)
 
 # Main
 ### Import data
 asset_path = Path(__file__).parent.parent.parent.parent / 'assets' / 'k-means-figures'
 data_path = Path(__file__).parent.parent.parent.parent / 'dataset-harmful-algal-bloom(HAB)' / 'HAB_Artificial_GAN_Dataset.csv'
-print(data_path)
+# print(data_path)
 df = pd.read_csv(data_path)
 
 hab_count = df['HAB_Present'].value_counts().sort_index()
@@ -49,38 +72,31 @@ df_hab = hab_count.to_frame(name='hab-count')
 dfi.export(df_hab, filename=f'{asset_path}\\hab-data-count.png',dpi=300)
 
 col_names = df.columns[:-1]
-new_col_names = []
+scaled_feats = []
 for col in col_names:
-  new_col_names.append(col + '_T')
+  scaled_feats.append(col + '_T')
 
 ### Transform data 
 scaler = StandardScaler()
-df[new_col_names] = scaler.fit_transform(df[col_names])
-print(df[new_col_names])
+df[scaled_feats] = scaler.fit_transform(df[col_names])
+# print(df[scaled_feats])
 
 ### Apply PCA, plot, identify influential features, and reduce
 pca = PCA()
-pca.fit(df[new_col_names])
-
-## PCA Plot
-plt.figure(figsize=(12,9))
-plt.plot(range(1,len(pca.explained_variance_ratio_.cumsum())+ 1), pca.explained_variance_ratio_.cumsum(),marker='o', linestyle='--')
-plt.title('Variance by Components')
-plt.xlabel('Number of Components')
-plt.ylabel('Cumulative Explained Variance')
-plt.show()
+pca.fit(df[scaled_feats])
+Plot_Component_Variance(pca, f'{asset_path}\\pca-component-variance.png')
 
 ## PCA reduce
 pca_red = PCA(n_components=0.70)
-pca_red.fit_transform(df[new_col_names])
+pca_red.fit_transform(df[scaled_feats])
 
 component_labels = [f"PC{i+1}" for i in range(pca_red.n_components_)]
-print(component_labels)
+# print(component_labels)
 
 loadings = pd.DataFrame(
     pca_red.components_.T,
     columns=[f"PC{i+1}" for i in range(pca_red.n_components_)],
-    index=df[new_col_names].columns
+    index=df[scaled_feats].columns
 )
 print(loadings)
 dfi.export(loadings, filename=f'{asset_path}\\pc-loadings.png', dpi=300)
@@ -89,24 +105,17 @@ top_feats = loadings.abs().idxmax()
 print(top_feats)
 
 ### Identify optimum clusters using elbow method
-Elbow_Method(df[new_col_names], 7)
+Elbow_Method(df[scaled_feats], 7)
 
 ### fit K-Means to scaled data
 num_clusters = 2
-kmeans = KMeans(n_clusters=num_clusters, n_init=42).fit(df[new_col_names])
+kmeans = KMeans(n_clusters=num_clusters, n_init=9, random_state=42).fit(df[scaled_feats])
 df['KMeans_2'] = kmeans.labels_
-
-cluster_value_count = df['KMeans_2'].value_counts().sort_index()
-df_clus = cluster_value_count.to_frame(name='kmeans-count')
-dfi.export(df_clus, filename=f'{asset_path}\\cluster-data-count.png',dpi=300)
-
-# print(df.groupby(["KMeans_2"])[new_col_names].mean())
-sil_val = silhouette_score(df[new_col_names],kmeans.labels_)
-print(sil_val)
+Cluster_Counts(df, 'KMeans_2', f'{asset_path}\\cluster-data-count.png')
 
 ### Plot over k-means PCA data
-df_pca = PCA(n_components=0.70).set_output(transform="pandas").fit_transform(df[new_col_names])
-centers_pca = PCA(n_components=0.70).set_output(transform="pandas").fit(df[new_col_names]).transform(kmeans.cluster_centers_)
+df_pca = PCA(n_components=0.70).set_output(transform="pandas").fit_transform(df[scaled_feats])
+centers_pca = PCA(n_components=0.70).set_output(transform="pandas").fit(df[scaled_feats]).transform(kmeans.cluster_centers_)
 
 fig_3d_scatter = plt.figure()
 ax = fig_3d_scatter.add_subplot(111, projection='3d')
@@ -133,9 +142,4 @@ plt.title('KMeans on Scaled Data / Plotted in PCA space')
 plt.show()
 
 ### Compare clustering vs ground truth
-ari = adjusted_rand_score(df['HAB_Present'], df['KMeans_2'])
-nmi = normalized_mutual_info_score(df['HAB_Present'], df['KMeans_2'])
-print("ARI:", ari, "NMI:", nmi)
-
-df_metrics = pd.DataFrame([[sil_val,ari,nmi]], columns=['Silhouette_Score','Adjusted_Rand_Inde','Normalized_Mutual_Information'])
-dfi.export(df_metrics, filename=f'{asset_path}\\evaluation-metrics.png',dpi=300)
+Metrics(df, scaled_feats, kmeans.labels_,'HAB_Present', 'KMeans_2', f'{asset_path}\\evaluation-metrics.png')
