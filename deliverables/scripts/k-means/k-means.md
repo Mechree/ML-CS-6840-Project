@@ -39,7 +39,7 @@ Specifies the number of times the k-means algorithm is run with different centro
 
 ### Elbow Method
 
-The Elbow Method is simply the process of creating a plot with the number of clusters on the x-axis and the total sum of squared errors (SSE) on the y-axis. Then identifying where a bend appears in the plot. If multiple bends exist choosing the one with the most inertia (largest SSE drop between points) would be a good candidate to choose.
+The Elbow Method is simply the process of creating a plot with the number of clusters on the x-axis and the total sum of squared errors (SSE) on the y-axis. Then, identify where a bend appears in the plot if multiple bends exist, choosing the first one or the bend that shows the most significant change from high to low slope (i.e., becoming flat). However, the Elbow Method is considered too subjective and typically requires complementation from another statistical metric, such as the Variance Ratio Criterion.
 
 ### Scaling
 
@@ -72,7 +72,11 @@ NMI measures the amount of shared information between the predicted clusters and
 
 ### Adjusted Rand Index (ARI)
 
-ARI computes another similarity metric used to measure two clusterings, adjusted for chance. Useful for determining the agreement of results between two methods or against ground truth data. A value of 1.0 indicates perfect match, a value of 0 indicates agreement equivilent to randomness, and a negative value indicates (up to -1) indicates severe disagreement. Considered more robust the NMI.
+ARI computes another similarity metric used to measure two clusterings, adjusted for chance. Useful for determining the agreement of results between two methods or against ground truth data. A value of 1.0 indicates perfect match, a value of 0 indicates agreement equivilent to randomness, and a negative value indicates (up to -1) indicates severe disagreement. Considered more robust than NMI.
+
+### Variance Ratio Criterion (Calinski–Harabasz index)
+
+An evaluation metric where the assessment of the clustering quality is based solely on the dataset and the clustering results, and not on external, ground truth labels.
 
 ## Training Process
 
@@ -84,13 +88,83 @@ For this project, the Scikit-Learn library was chosen over frameworks like PyTor
 2. Transform data using a scaler.
 3. Use PCA to identify component variance.
 4. Use Elbow Method to identify optimum n_clusters (Optional if desired cluster size is known).
-5. Use K-Means on the scaled data.
-6. Plot KMeans points in PCA Space (for easier visualization with 3D/2D graphs)
-7. Perform evaluation through various metrics.
+5. Use VRC to complement the Elbow Method for determing the optimum number of clusters.
+6. Use K-Means on the scaled data.
+7. Plot KMeans points in PCA Space (for easier visualization with 3D/2D graphs)
+8. Perform evaluation through various metrics.
 
 ## Results
 
+#### PCA and Visualization
+
+One way to improve data visualization, improve computational efficiency, and condense high-dimensional datasets is through dimensionality reduction methods such as Principal Component Analysis (PCA). By maximizing the amount of information in each consecutive component, new features created by combining the initial features, allow our dataset to be reduced to only a few components that capture most of the necessary information from the original features. In the dataset used for this project, we had 9 features, but with PCA, we reduced it to 3 while retaining over 70% of the original information. This enabled the 3D visualization of the data points in PCA space as a scatter plot.
+
+<figure>
+    <img src="../../../assets/k-means-figures/pca-component-variance.png" alt="Alt text"  width="600"/>
+    <figcaption><b>Figure 1</b>: Shows the variance levels by component from PCA.
+</figcaption>
+</figure>
+
+<figure>
+    <img src="../../../assets/k-means-figures/pc-loadings.png" alt="Alt text"  width="600"/>
+    <figcaption><b>Figure 2</b>: The loadings, feature values that have a strong correlation with each component.
+</figcaption>
+</figure>
+
+<figure>
+    <img src="../../../assets/k-means-figures/pca-clustering.png" alt="Alt text"  width="600"/>
+    <figcaption><b>Figure 3</b>: The 3D visualization of the KMeans clusters in PCA space.
+</figcaption>
+</figure>
+
+#### Elbow Method and VRC
+
+The Elbow Method and Variance Ratio Criterion (VRC) revealed that 4 is the optimal number of clusters for the dataset. However, for our use case of comparing the model against the existing ground truth labels (i.e., HAB_Present: yes or no), we simply used performed these metrics as a formality, since we were going to use 2 clusters regardless of the results. Interestingly, the results from these metrics could imply that more complex classifications may exist for the data. Instead of simply identifying whether an algal bloom is present, the additional clusters could indicate that an algal bloom is approaching the early or later stages. More analysis and experimentation with this dataset would be required to determine whether this hypothesis is true.
+
+<figure>
+    <img src="../../../assets/k-means-figures/elbow-method.png" alt="Alt text"  width="600"/>
+    <figcaption><b>Figure 4</b>: The bends from the Elbow Method. Four clusters is considered optimal. 
+</figcaption>
+</figure>
+
+<table>
+  <caption><b>Table 1</b>: The Variance Ration Criterion from KMeans clustering results in order of 2, 3, 4, and 5 clusters. Note that higher values indicate better clustering. 
+  </caption>
+  <tr>
+    <td><img src="../../../assets/k-means-figures/vrc-2C.png" width="300"></td>
+    <td><img src="../../../assets/k-means-figures/vrc-3C.png" width="300"></td>
+    <td><img src="../../../assets/k-means-figures/vrc-4C.png" width="300"></td>
+    <td><img src="../../../assets/k-means-figures/vrc-5C.png" width="300"></td>
+  </tr>
+</table>
+
+#### Evaluation Metrics
+
+The evaluation metrics performed on the KMeans clusters were the Silhouette, ARI, and NMI scores. The Silhouette score of 0.29 indicates weak separation. An Adjusted Rand Index (ARI) of .41 (rounded up) indicates that there is a moderate similarity between the KMeans clusters and the ground truth clusters. Similarly, the Normalized Mutual Index (NMI) score of .39 (rounded up) also indicates moderate agreement between the predicted and ground truth clusters. This is indicative that the model did "decent" enough, but there is room for improvement.
+
+<table>
+  <caption><b>Table 2</b>: The clustering count of the ground truth and KMeans. 
+  </caption>
+  <tr>
+    <td style="padding-left: 40px;"><img src="../../../assets/k-means-figures/hab-data-count.png" width="208"></td>
+    <td><img src="../../../assets/k-means-figures/cluster-data-count.png" width="250"></td>
+
+  </tr>
+</table>
+
+<figure>
+    <img src="../../../assets/k-means-figures/evaluation-metrics.png" alt="Alt text"  width="800"/>
+    <figcaption><b>Figure 5</b>: The evaluation metrics on the clustering from the KMeans ML Model (with 2 clusters) against the ground truth. 
+</figcaption>
+</figure>
+
 ## Summary
+
+For our project, we chose K-Means clustering as an unsupervised machine learning method to compare its cluster assignments with existing binary ground truth labels from the HAB dataset. K-Means was chosen for its simplicity, efficiency, and suitability for splitting data into distinct groups. Our workflow involved scaling the data, reducing dimensionality with PCA, determining the number of clusters using the Elbow Method and Variance Ratio Criterion (VRC), fitting K-Means, visualizing in PCA space, and evaluating with multiple metrics.
+
+Using PCA reduced the dataset from 9 features to 3 components, retaining over 70% of the variance and enabled effective 3D visualization. Although the Elbow Method and VRC metrics suggested 4 optimal clusters, the HAB dataset constrained us to use the KMeans model with 2 clusters to align with ground truth labels; However, those results hint at potential sub-classes within the dataset. The other evaluation metrics, Silhouette Score (0.29), ARI (0.41), and NMI (0.39), show weak cluster separation but moderate agreement between predicted clusters and ground truth, indicating reasonable but improvable performance.
+
+Overall, the model provides a useful baseline for unsupervised comparison and hints at more nuanced classifications within the dataset.
 
 # Resources
 
