@@ -17,6 +17,10 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 import dataframe_image as dfi
+import seaborn as sns 
+from sklearn.decomposition import PCA
+from mpl_toolkits.mplot3d import Axes3D
+
 
 # model Def
 class LogisticRegression(nn.Module):
@@ -103,12 +107,24 @@ def evaluate_model(model, test_loader):
     f1 = f1_score(y_true, y_prediction, zero_division=0)
     cm = confusion_matrix(y_true, y_prediction)
     
+    # Calculate misclassifications
+    misclassified = y_true != y_prediction
+    num_misclassified = np.sum(misclassified)
+    num_false_positives = np.sum((y_prediction == 1) & (y_true == 0))
+    num_false_negatives = np.sum((y_prediction == 0) & (y_true == 1))
+    
     return {
         'accuracy': acc,
         'precision': prec,
         'recall': rec,
         'f1': f1,
-        'confusion_matrix': cm
+        'confusion_matrix': cm,
+        'misclassified': misclassified,
+        'num_misclassified': num_misclassified,
+        'num_false_positives': num_false_positives,
+        'num_false_negatives': num_false_negatives,
+        'y_pred': y_prediction.astype(int),
+        'y_true': y_true.astype(int)
     }
 
 # paths of where to find and store data
@@ -172,7 +188,7 @@ for split_name, train_size in splits.items():
     input_size = X_scaled.shape[1]
     model = LogisticRegression(input_size)
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
     
     # train model
     # CHANGE EPOCHS AND PATIENCE HERE
@@ -185,6 +201,9 @@ for split_name, train_size in splits.items():
     print(f"Precision: {results['precision']:.4f}")
     print(f"Recall: {results['recall']:.4f}")
     print(f"F1-Score: {results['f1']:.4f}")
+    print(f"Misclassifications: {results['num_misclassified']}")
+    print(f"  - False Positives: {results['num_false_positives']}")
+    print(f"  - False Negatives: {results['num_false_negatives']}")   
  
     
     results_summary.append({
@@ -195,7 +214,7 @@ for split_name, train_size in splits.items():
         'F1': results['f1'],
     })
     
-    # Plot learning curves
+    # plot learning curves
     plt.figure(figsize=(10, 6))
     plt.plot(train_losses, label='Train Loss', linewidth=2)
     plt.plot(val_losses, label='Validation Loss', linewidth=2)
@@ -205,6 +224,47 @@ for split_name, train_size in splits.items():
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.savefig(f'{asset_path}/learning_curves_{split_name.replace(":", "_")}.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    
+    # plotting 3D PCA visualization with misclassifications like Rose
+    pca_3d = PCA(n_components=3)
+    X_test_pca = pca_3d.fit_transform(X_test)
+    
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    #plot correctly classified points
+    correct = ~results['misclassified']
+    ax.scatter(X_test_pca[correct, 0], X_test_pca[correct, 1], X_test_pca[correct, 2],
+               c='purple', marker='o', s=50, label='Correctly Classified', alpha=0.6)
+    
+    # plot false positives (red X)
+    false_pos = (results['misclassified']) & (results['y_pred'] == 1)
+    ax.scatter(X_test_pca[false_pos, 0], X_test_pca[false_pos, 1], X_test_pca[false_pos, 2],
+               c='red', marker='x', s=200, label='False Positive', linewidth=2)
+    
+    # plot false negatives (red circle)
+    false_neg = (results['misclassified']) & (results['y_pred'] == 0)
+    ax.scatter(X_test_pca[false_neg, 0], X_test_pca[false_neg, 1], X_test_pca[false_neg, 2],
+               c='red', marker='o', s=200, label='False Negative', alpha=0.7)
+    
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    ax.set_title(f'3D PCA of Test Set with Misclassifications - {split_name} Split')
+    ax.legend()
+    plt.savefig(f'{asset_path}/pca_misclassifications_{split_name.replace(":", "_")}.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # plot confusion matrix
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(results['confusion_matrix'], annot=True, fmt='d', cmap='Blues', cbar=False,
+                xticklabels=['No HAB', 'HAB'], yticklabels=['No HAB', 'HAB'])
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.title(f'Confusion Matrix - {split_name} Split')
+    plt.savefig(f'{asset_path}/confusion_matrix_{split_name.replace(":", "_")}.png', dpi=300, bbox_inches='tight')
     plt.close()
 
 # summary table
