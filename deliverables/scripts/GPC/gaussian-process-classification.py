@@ -7,12 +7,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import accuracy_score, f1_score, log_loss, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, log_loss, classification_report, confusion_matrix, precision_score, recall_score
 from sklearn.decomposition import PCA
 
-from typing import Tuple
+from typing import Tuple, Any
 import dataframe_image as dfi
 from playwright.sync_api import sync_playwright
+
+from GPC_graphs import save_split_results_table
 
 def load_dataset(csv_path: Path, target_column: str)\
 -> Tuple[pd.DataFrame, np.ndarray, np.ndarray]:
@@ -46,7 +48,7 @@ def train_gpc(x_train: np.ndarray, y_train: np.ndarray, max_iter: int = 300, n_r
     return gpc_model
 
 def evaluate_gpc(gpc_model: GaussianProcessClassifier, x_test: np.ndarray, y_test: np.ndarray)\
--> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+-> tuple[Any, Any, Any, dict[str, Any]]:
 
     y_pred = gpc_model.predict(x_test)
     probs = gpc_model.predict_proba(x_test)
@@ -63,7 +65,15 @@ def evaluate_gpc(gpc_model: GaussianProcessClassifier, x_test: np.ndarray, y_tes
     print("False positives at indices:", false_positive_idx.tolist())
     print("False negatives at indices:", false_negative_idx.tolist())
 
-    return y_pred, probs, confidence
+    metrics = {
+        "Accuracy": accuracy_score(y_test, y_pred),
+        "Precision": precision_score(y_test, y_pred),
+        "Recall": recall_score(y_test, y_pred),
+        "F1": f1_score(y_test, y_pred)
+    }
+
+    return y_pred, probs, confidence, metrics
+
 
 def cross_validate_gpc(gpc_model: GaussianProcessClassifier, x_train: np.ndarray, y_train: np.ndarray, cv_folds: int=5)\
 -> np.ndarray:
@@ -105,6 +115,7 @@ def save_pca_loadings(output_dir: Path, pca_model: PCA, feature_names: list, nam
 
     if csv_path.exists():
         csv_path.unlink()
+
     loadings.to_csv(csv_path)
 
     table_path = output_dir / f"pca_loadings_table{name_suffix}.png"
@@ -163,6 +174,8 @@ feature_names = df.drop(columns=["HAB_Present"]).columns.tolist()
 
 splits = {'Train20:Test80':0.2,'Train40:Test60':0.4,'Train80:Test20':0.8}
 
+all_metrics = {}
+
 for split_name, train_size in splits.items():
     print("Running split", split_name)
 
@@ -170,11 +183,14 @@ for split_name, train_size in splits.items():
 
     gpc_model = train_gpc(x_train_pca, y_train)
     cross_validate_gpc(gpc_model, x_train_pca, y_train)
-    y_pred, probs, confidence = evaluate_gpc(gpc_model, x_test_pca, y_test)
+    y_pred, probs, confidence, metrics = evaluate_gpc(gpc_model, x_test_pca, y_test)
+    all_metrics[split_name] = metrics
 
     save_results_to_csv(output_dir, y_test, y_pred, probs, confidence, name_suffix="_"+split_name)
     save_pca_loadings(output_dir, pca_model, feature_names, name_suffix="_"+split_name)
 
     plot_3d_pca(x_test_scaled, y_test, y_pred, probs, output_dir, name_suffix="_"+split_name, split_name=split_name)
+
+save_split_results_table(all_metrics, output_dir)
 
 print("All splits completed.")

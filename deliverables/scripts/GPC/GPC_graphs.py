@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
 from pathlib import Path
+import dataframe_image as dfi
 
 def plot_roc_curve(y_true, probs, split_name, output_dir):
     fpr, tpr, _ = roc_curve(y_true, probs)
@@ -64,6 +65,16 @@ def plot_confidence_distribution(confidences, split_name, output_dir):
     plt.savefig(plot_path, dpi=300)
 
     plt.close()
+
+def save_split_results_table(results_dict, output_dir):
+    df = pd.DataFrame(results_dict).T
+    df.index.name = "Split"
+
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    table_path = Path(output_dir) / "gpc_split_results.png"
+
+    dfi.export(df, table_path, dpi=300)
+    print(f"Saved split results table to {table_path}")
 
 def generate_graphs_for_splits():
     splits = ['Train20:Test80','Train40:Test60','Train80:Test20']
