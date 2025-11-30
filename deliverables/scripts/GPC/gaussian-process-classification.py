@@ -108,7 +108,9 @@ def save_results_to_csv(output_dir: Path, y_test: np.ndarray, y_pred: np.ndarray
 def save_pca_loadings(output_dir: Path, pca_model: PCA, feature_names: list, name_suffix: str="")\
 -> None:
     num_components_to_show = 3
-    loadings = pd.DataFrame(pca_model.components_[:num_components_to_show].T,index=feature_names,columns=[f'PC{i + 1}' for i in range(num_components_to_show)])
+    loadings = pd.DataFrame(pca_model.components_[:num_components_to_show].T, index=feature_names, columns=[f'PC{i + 1}' for i in range(num_components_to_show)])
+
+    loadings = loadings.round(3)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     csv_path = output_dir / f"pca_loadings{name_suffix}.csv"

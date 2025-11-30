@@ -69,12 +69,21 @@ def plot_confidence_distribution(confidences, split_name, output_dir):
 def save_split_results_table(results_dict, output_dir):
     df = pd.DataFrame(results_dict).T
     df.index.name = "Split"
+    df.reset_index(inplace=True)
+
+    df.iloc[:, 1:] = df.iloc[:, 1:].round(3)
+
+    styled_df = (
+        df.style
+        .set_properties(**{
+            'text-align': 'center'
+        })
+    )
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     table_path = Path(output_dir) / "gpc_split_results.png"
 
-    dfi.export(df, table_path, dpi=300)
-    print(f"Saved split results table to {table_path}")
+    dfi.export(styled_df, table_path, dpi=300)
 
 def generate_graphs_for_splits():
     splits = ['Train20:Test80','Train40:Test60','Train80:Test20']
