@@ -249,12 +249,14 @@ for split_name, train_size in splits.items():
     ax.scatter(X_test_pca[false_neg, 0], X_test_pca[false_neg, 1], X_test_pca[false_neg, 2],
                c='red', marker='o', s=200, label='False Negative', alpha=0.7)
     
-    ax.set_xlabel('PC1')
-    ax.set_ylabel('PC2')
-    ax.set_zlabel('PC3')
+    ax.set_xlabel('PC1', labelpad=10)
+    ax.set_ylabel('PC2', labelpad=10)
+    ax.set_zlabel('PC3', labelpad=10)
     ax.set_title(f'3D PCA of Test Set with Misclassifications - {split_name} Split')
     ax.legend()
-    plt.savefig(f'{asset_path}/pca_misclassifications_{split_name.replace(":", "_")}.png', dpi=300, bbox_inches='tight')
+    plt.tight_layout()  # ADD THIS LINE
+    plt.savefig(f'{asset_path}/pca_misclassifications_{split_name.replace(":", "_")}.png', 
+                dpi=300, bbox_inches='tight', pad_inches=0.5)  # ADD pad_inches=0.5
     plt.close()
     
     # plot confusion matrix
