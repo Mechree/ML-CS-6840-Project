@@ -174,7 +174,7 @@ output_dir = Path("../../../assets/GPC")
 df, x, y = load_dataset(data_path, target_column="HAB_Present")
 feature_names = df.drop(columns=["HAB_Present"]).columns.tolist()
 
-splits = {'Train20:Test80':0.2,'Train40:Test60':0.4,'Train80:Test20':0.8}
+splits = {'Train20_Test80':0.2,'Train40_Test60':0.4,'Train80_Test20':0.8}
 
 all_metrics = {}
 

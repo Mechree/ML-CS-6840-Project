@@ -86,7 +86,7 @@ def save_split_results_table(results_dict, output_dir):
     dfi.export(styled_df, table_path, dpi=300)
 
 def generate_graphs_for_splits():
-    splits = ['Train20:Test80','Train40:Test60','Train80:Test20']
+    splits = ['Train20_Test80','Train40_Test60','Train80_Test20']
 
     output_dir = "../../../assets/GPC"
 

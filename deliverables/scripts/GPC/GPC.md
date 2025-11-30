@@ -9,9 +9,9 @@ Some limitations of GPC include its computational cost. The Gaussian Processes s
 
 #### kernel
 The kernel defines how similarity between input samples is measured. For this project, a composite kernel was used:
-- **Matern Kernel:** Chosen for flexibility. This kernel operates well with noisy, real-world biological data as it models less smooth functions.
-
 - **ConstantKernel:** Controls the overall magnitude of the function.
+
+- **Matern Kernel:** Chosen for flexibility. This kernel operates well with noisy, real-world biological data as it models less smooth functions.
 
 - **WhiteKernel:** Explicitly models observational noise, preventing overconfident predictions.
 
